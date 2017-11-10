@@ -4,9 +4,35 @@ import Data.Char
 import Data.List
 
 main = do
+        putStrLn "Choose language: FPGA, abstract"
+        language <- getLine
+        putStrLn "Input proposition"
         input <- getLine
         let abst = translate input
-        putStrLn abst
+        if language == "FPGA"
+          then
+            putStrLn (abstrToFPGA abst)
+          else
+            if language == "abstract"
+              then
+                putStrLn abst
+              else
+                putStrLn "No such language"
+
+abstrToFPGA :: String -> String
+abstrToFPGA "" = ""
+abstrToFPGA abst = replaceUsingRegex abst opList
+        where allVars = getVariables abst
+              uniqueVars = nub allVars
+              finalVars = [[(var !! (length var - i)) |i <- [1..(length var)]] | var <- uniqueVars, var /= []]
+              varsList = [(mkRegex c, "reg_in[" ++ c ++ "]") | c <- finalVars]
+              andOp = (mkRegex "&", " & ")
+              orOp = (mkRegex "/", " | ")
+              notOp = (mkRegex "!", " ~")
+              impliesOp = (mkRegex ">", " WIP ")
+              equalsOp = (mkRegex "=", " ^~ ")
+              nEqualsOp = (mkRegex "#", " ^ ")
+              opList = andOp:orOp:notOp:impliesOp:equalsOp:nEqualsOp:varsList
 
 translate :: String -> String
 translate [] = []
