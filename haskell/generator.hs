@@ -31,7 +31,7 @@ treeToVerilog :: Tree Char -> String
 treeToVerilog Empty = ""
 treeToVerilog (Node x Empty Empty) = charToVerilog x
 treeToVerilog (Node '>' left right) = "~(" ++ treeToVerilog left ++ ") | " ++ treeToVerilog right
-treeToVerilog (Node x left right) = "(" ++ treeToVerilog left ++ ")" ++ charToVerilog x ++ "(" ++ treeToVerilog right ++ ")"
+treeToVerilog (Node x left right) = (if x == '!' then "" else "(" ++ treeToVerilog left ++ ")") ++ charToVerilog x ++ "(" ++ treeToVerilog right ++ ")"
 
 charToVerilog :: Char -> String
 charToVerilog '&' = " & "
@@ -111,10 +111,12 @@ prepVariables [] = ""
 prepVariables str = replaceUsingRegex str opList
         where allVars = getVariables str
               uniqueVars = nub allVars
-              finalVars = [[var !! (length var - i) |i <- [1..length var]] | var <- uniqueVars, var /= []]
+              finalVars = [var | var <- uniqueVars, var /= []]
               opList = [(mkRegex (finalVars !! i) :: Regex, [intToDigit i]) | i <- [0..length finalVars - 1]]
 
 getVariables :: String -> [String]
-getVariables = foldl helper [[]]
+getVariables "" = [""]
+getVariables str = map reverse reverseStr
         where helper [[]] x = if x `elem` "/!&>=#()" then [[]] else [[x]]
               helper (full@(first:rest)) x = if x `elem` "/!&>=#()" then []:full else (x:first):rest
+              reverseStr = foldl helper [[]] str
